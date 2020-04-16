@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/spin-org/thermomatic/internal/common"
+	"github.com/autom8ter/thermomatic/internal/common"
 )
 
 func main() {
