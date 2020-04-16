@@ -128,6 +128,7 @@ func (s *Server) RemoveClient(imei uint64) {
 	}
 }
 
+//client.Cache implementation
 func (c *Server) SetReading(imei uint64, reading *client.Reading) {
 	c.readingMu.Lock()
 	defer c.readingMu.Unlock()
