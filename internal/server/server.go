@@ -62,7 +62,7 @@ func NewServer(config *Config) (*Server, error) {
 func (s *Server) Listen(ctx context.Context) {
 	s.setupRoutes()
 	defer s.tcpLis.Close()
-	wg := sync.WaitGroup{}
+	wg := sync.WaitGroup{} //wg will opens several goroutines to start the tcp & http servers.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -103,6 +103,7 @@ func (s *Server) Listen(ctx context.Context) {
 			log.Fatalf("[FATAL] %s", err.Error())
 		}
 	}()
+	//wait until all client connections are closed before exiting server
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
