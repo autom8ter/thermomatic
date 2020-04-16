@@ -32,6 +32,7 @@ type ClientConn interface {
 
 type ClientHub interface {
 	AddClient(c ClientConn)
+	RemoveClient(imei uint64)
 }
 
 //client implements ClientConn
@@ -96,6 +97,7 @@ func NewClient(conn net.Conn, hub ClientHub, cache Cache, clientLog, serverLog *
 	}
 	client.handleDone = func(c ClientConn) {
 		client.cache.DeleteReading(c.GetIMEI())
+		client.hub.RemoveClient(c.GetIMEI())
 	}
 	return client, nil
 }
