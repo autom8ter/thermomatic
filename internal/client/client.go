@@ -150,23 +150,3 @@ func (c *client) GetManager() Manager {
 func (c *client) Close() {
 	c.close <- struct{}{}
 }
-
-//OnLogin is used to change the default behavior of a client on login
-func (c *client) OnLogin(handler func(c ClientConn, err error)) {
-	c.handleErr = handler
-}
-
-//OnErr is used to change the default behavior of a client whenever an error occurs during the lifecycle of its connection
-func (c *client) OnErr(handler func(c ClientConn, err error)) {
-	c.handleErr = handler
-}
-
-//OnRead is used to change the default behavior when a client sends a reading
-func (s *client) OnRead(handler func(c ClientConn, reading *Reading) error) {
-	s.handleReading = handler
-}
-
-//OnDone is used to change the default behavior when a client is closing
-func (c *client) OnDone(handler func(c ClientConn)) {
-	c.handleDone = handler
-}
