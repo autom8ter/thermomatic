@@ -43,7 +43,7 @@ func (s *Server) handleStatus() http.HandlerFunc {
 				w.WriteHeader(http.StatusOK)
 			}
 		} else {
-			http.Error(w, "reading not found", http.StatusNotFound)
+			http.Error(w, "reading not found", http.StatusNoContent)
 			return
 		}
 	}
@@ -72,7 +72,7 @@ func (s *Server) handleReading() http.HandlerFunc {
 				return
 			}
 		} else {
-			http.Error(w, "reading not found", http.StatusNotFound)
+			http.Error(w, "reading not found", http.StatusNoContent)
 			return
 		}
 	}
