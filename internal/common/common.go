@@ -31,3 +31,10 @@ const (
 func Wrap(typ ErrType, details string) error {
 	return fmt.Errorf("%s  - %s", typ, details)
 }
+
+type Stats struct {
+	GoRoutines        int    `json:"goroutines"`
+	ClientConnections int    `json:"clientConnections"`
+	CPUs              int    `json:"cpus"`
+	Version           string `json:"version"`
+}

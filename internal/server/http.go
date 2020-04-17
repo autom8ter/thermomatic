@@ -2,8 +2,10 @@ package server
 
 import (
 	"encoding/json"
+	"github.com/autom8ter/thermomatic/internal/common"
 	"net/http"
 	"net/http/pprof"
+	"runtime"
 	"strconv"
 	"time"
 )
@@ -57,6 +59,7 @@ func (s *Server) handleReading() http.HandlerFunc {
 		}
 		if reading, ok := s.GetReading(uid); ok {
 			if err := json.NewEncoder(w).Encode(reading); err != nil {
+				s.serverLog.Printf("failed to encode reading = %s", err.Error())
 				http.Error(w, "failed to encode reading", http.StatusInternalServerError)
 				return
 			}
@@ -69,6 +72,17 @@ func (s *Server) handleReading() http.HandlerFunc {
 
 func (s *Server) handleStats() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		//finish implementation
+		stats := &common.Stats{
+			GoRoutines:        runtime.NumGoroutine(),
+			ClientConnections: len(s.readings),
+			CPUs:              runtime.NumCPU(),
+			Version:           runtime.Version(),
+		}
+
+		if err := json.NewEncoder(w).Encode(stats); err != nil {
+			s.serverLog.Printf("failed to encode stats = %s", err.Error())
+			http.Error(w, "failed to encode stats", http.StatusInternalServerError)
+			return
+		}
 	}
 }

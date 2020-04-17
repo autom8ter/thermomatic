@@ -81,7 +81,7 @@ func TestE2E(t *testing.T) {
 		}
 		q := target.Query()
 		q.Set("imei", imei)
-		target .RawQuery = q.Encode()
+		target.RawQuery = q.Encode()
 		resp, err := http.DefaultClient.Get(target.String())
 		if err != nil {
 			t.Fatal(err.Error())
@@ -132,5 +132,5 @@ func TestE2ELoad(t *testing.T) {
 		}
 	}
 	//57ms on average for 10,000 messages(on averagee)
-	t.Logf("TestE2ELoad load: %v time: %vms", load, time.Since(now).Nanoseconds()/ 1000000)
+	t.Logf("TestE2ELoad load: %v time: %vms", load, time.Since(now).Nanoseconds()/1000000)
 }
