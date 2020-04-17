@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/autom8ter/thermomatic/internal/common"
 	"github.com/autom8ter/thermomatic/internal/imei"
+	"io"
 	"log"
 	"net"
 	"time"
@@ -120,12 +121,15 @@ func (c *client) Connect(ctx context.Context) {
 			}
 			b := make([]byte, 40) //read imei from connection
 			if _, err := c.GetConn().Read(b); err != nil {
-				if err, ok := err.(net.Error); ok && err.Timeout() {
+				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 					c.handleErr(c, fmt.Errorf("client timeout: %s", err))
 					c.Close()
-				} else {
-					c.handleErr(c, fmt.Errorf("reading message: %s", err))
+					return
 				}
+				if err == io.EOF {
+					return
+				}
+				c.handleErr(c, fmt.Errorf("failed to read message: %s", err))
 				return
 			}
 			var reading = new(Reading)
