@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/autom8ter/thermomatic/internal/common"
 	"github.com/autom8ter/thermomatic/internal/imei"
-	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"time"
@@ -65,7 +63,7 @@ func NewClient(conn net.Conn, hub ClientHub, cache Cache, clientLog, serverLog *
 		clientLog: clientLog,
 		serverLog: serverLog,
 		handleErr: func(c ClientConn, err error) {
-			serverLog.Printf("[ERROR] %v error: %s", c.GetIMEI(), err.Error())
+			serverLog.Printf("[ERROR] %v error: %s", c.GetIMEI(), err)
 		},
 		hub:   hub,
 		close: make(chan struct{}, 1),
@@ -76,9 +74,12 @@ func NewClient(conn net.Conn, hub ClientHub, cache Cache, clientLog, serverLog *
 			return err
 		}
 		b := make([]byte, 15) //read imei from connection
-		if _, err := io.ReadFull(conn, b); err != nil {
+		if _, err := conn.Read(b); err != nil {
 			return err
 		}
+		//if _, err := io.ReadFull(conn, b); err != nil {
+		//	return err
+		//}
 		code, err := imei.Decode(b)
 		if err != nil {
 			return err
@@ -108,29 +109,35 @@ func (c *client) Connect(ctx context.Context) {
 	for {
 		select {
 		default:
-			//handleLogin when the client first establishes a conectionn
-			if err := c.handleLogin(c); err != nil {
-				c.Close()
-				return
+			if c.GetIMEI() == 0 {
+				//handleLogin when the client first establishes a conectionn
+				if err := c.handleLogin(c); err != nil {
+					c.handleErr(c, fmt.Errorf("client login: %s", err))
+					c.Close()
+					return
+				}
+
 			}
-			bits, err := ioutil.ReadAll(c.GetConn())
-			if err, ok := err.(net.Error); ok && err.Timeout() {
-				c.Close()
+			b := make([]byte, 40) //read imei from connection
+			if _, err := c.GetConn().Read(b); err != nil {
+				if err, ok := err.(net.Error); ok && err.Timeout() {
+					c.handleErr(c, fmt.Errorf("client timeout: %s", err))
+					c.Close()
+				} else {
+					c.handleErr(c, fmt.Errorf("reading message: %s", err))
+				}
 				return
-			}
-			if err == io.EOF {
-				continue
 			}
 			var reading = new(Reading)
-			if len(bits) >= common.MinReadingLength {
-				ok, err := reading.Decode(bits)
+			if len(b) >= common.MinReadingLength {
+				ok, err := reading.Decode(b)
 				if err != nil {
-					c.handleErr(c, err)
+					c.handleErr(c, fmt.Errorf("decode reading: %s", err))
 					continue
 				}
 				if ok {
 					if err := c.handleReading(c, reading); err != nil {
-						c.handleErr(c, err)
+						c.handleErr(c, fmt.Errorf("handle reading: %s", err))
 					}
 				}
 			}
