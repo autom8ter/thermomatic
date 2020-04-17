@@ -1,9 +1,14 @@
 package main_test
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/autom8ter/thermomatic/internal/client"
+	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
+	url2 "net/url"
 	"testing"
 	"time"
 )
@@ -70,25 +75,28 @@ func TestE2E(t *testing.T) {
 		if _, err := conn.Write(bits); err != nil {
 			t.Fatal(err.Error())
 		}
-		//resp, err := http.Get(fmt.Sprintf("http://localhost:1337/readings?=%s",imei))
-		//if err != nil {
-		//	t.Fatal(err.Error())
-		//}
-		//defer resp.Body.Close()
-		//reading := &client.Reading{}
-		//if err := json.NewDecoder(resp.Body).Decode(reading); err != nil {
-		//	t.Fatal(err.Error())
-		//}
-	}
-	for i := 0; i < 10000; i++ {
-
+		//go get the latest value from endpoint
+		target, err := url2.Parse("http://localhost:1338/readings")
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+		q := target.Query()
+		q.Set("imei", imei)
+		target .RawQuery = q.Encode()
+		resp, err := http.DefaultClient.Get(target.String())
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+		defer resp.Body.Close()
+		reading := &client.Reading{}
+		bits, _ = ioutil.ReadAll(resp.Body)
+		fmt.Println("response: ", string(bits))
+		if err := json.Unmarshal(bits, reading); err != nil {
+			t.Fatal(err.Error())
+		}
 	}
 }
 
-
-//go test -v -bench=.
-//pkg: github.com/autom8ter/thermomatic/internal/client
-//BenchmarkDecode1-12     20000000                75.4 ns/op             0 B/op          0 allocs/op
 func TestE2ELoad(t *testing.T) {
 	conn, err := net.Dial("tcp", "localhost:1337")
 	if err != nil {

@@ -12,21 +12,21 @@ import (
 // Reading is the set of device readings.
 type Reading struct {
 	// Temperature denotes the temperature reading of the message.
-	Temperature float64
+	Temperature float64 `json:"temperature"`
 
 	// Altitude denotes the altitude reading of the message.
-	Altitude float64
+	Altitude float64 `json:"altitude"`
 
 	// Latitude denotes the latitude reading of the message.
-	Latitude float64
+	Latitude float64 `json:"latitude"`
 
 	// Longitude denotes the longitude reading of the message.
-	Longitude float64
+	Longitude float64 `json:"longitude"`
 
 	// BatteryLevel denotes the battery level reading of the message.
-	BatteryLevel float64
+	BatteryLevel float64 `json:"batteryLevel"`
 
-	Timestamp time.Time
+	Timestamp time.Time `json:"timestamp"`
 }
 
 //String returns a human readable string
