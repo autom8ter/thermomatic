@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/autom8ter/thermomatic/internal/common"
-	"log"
 	"math"
 	"time"
 )
@@ -30,13 +29,13 @@ type Reading struct {
 }
 
 //String returns a human readable string
-func (r *Reading) String(imei uint64) string {
+func (r Reading) String(imei uint64) string {
 	return fmt.Sprintf(`%v,%v,%v,%v,%v,%v,%v\n`, time.Now().Unix(), imei, r.Temperature, r.Altitude, r.Latitude, r.Longitude, r.BatteryLevel)
 
 }
 
 //validate returns true with no error if the reading is valid. it also returns an error message if the reading is invalid
-func (r *Reading) validate() (bool, error) {
+func (r Reading) validate() (bool, error) {
 	if r.Temperature < -300 || r.Temperature > 300 {
 		return false, common.Wrap(common.ErrReadingTemp, fmt.Sprintf("value: %v", r.Temperature))
 	}
@@ -75,8 +74,8 @@ func (r *Reading) Decode(b []byte) (bool, error) {
 }
 
 //Log uses the provided logger to log the reading as a human readable string
-func (r *Reading) Log(code uint64, log *log.Logger) {
-	log.Print(fmt.Sprintf("record = %s", r.String(code)))
+func (r Reading) Log(code uint64, logger Printer) {
+	logger.Printf("record = %s", r.String(code))
 }
 
 //Encode encodes a reading to a byteslice

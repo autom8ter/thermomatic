@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func (s *Server) setupRoutes() {
+func (s server) setupRoutes() {
 	s.mux.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
 	s.mux.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
 	s.mux.Handle("/debug/pps.muxof/profile", http.HandlerFunc(pprof.Profile))
@@ -21,7 +21,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/stats", s.handleStats())
 }
 
-func (s *Server) handleStatus() http.HandlerFunc {
+func (s server) handleStatus() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, "expecting method: GET", http.StatusMethodNotAllowed)
@@ -49,7 +49,7 @@ func (s *Server) handleStatus() http.HandlerFunc {
 	}
 }
 
-func (s *Server) handleReading() http.HandlerFunc {
+func (s server) handleReading() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, "expecting method: GET", http.StatusMethodNotAllowed)
@@ -79,7 +79,7 @@ func (s *Server) handleReading() http.HandlerFunc {
 }
 
 //handleStats serves health related metrics.
-func (s *Server) handleStats() http.HandlerFunc {
+func (s server) handleStats() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, "expecting method: GET", http.StatusMethodNotAllowed)

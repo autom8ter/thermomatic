@@ -2,14 +2,13 @@ package client
 
 import (
 	"context"
-	"log"
 	"net"
 )
 
 //Cache can persist,fetch, and delete each client's last reading in memory
 type Cache interface {
-	SetReading(imei uint64, reading *Reading)
-	GetReading(imei uint64) (*Reading, bool)
+	SetReading(imei uint64, reading Reading)
+	GetReading(imei uint64) (Reading, bool)
 	DeleteReading(imei uint64)
 }
 
@@ -30,8 +29,12 @@ type ClientHub interface {
 
 //Logger gets client and server loggers
 type Logger interface {
-	GetClientLogger() *log.Logger
-	GetServerLogger() *log.Logger
+	GetClientLogger() Printer
+	GetServerLogger() Printer
+}
+
+type Printer interface {
+	Printf(format string, args ...interface{})
 }
 
 //Manager manages client connections (implemented by server.Server

@@ -131,7 +131,7 @@ func TestDecode(t *testing.T) {
 }
 
 //go test -v -bench=.
-//BenchmarkDecode1-12     20000000                75.4 ns/op             0 B/op          0 allocs/op
+//BenchmarkDecode-12     20000000                75.4 ns/op             0 B/op          0 allocs/op
 func BenchmarkDecode(b *testing.B) {
 	b.ReportAllocs()
 	r := new(client.Reading)

@@ -20,8 +20,8 @@ type Config struct {
 	ServerLogPrefix string
 }
 
-//Server serves tcp connections for logging iot device readings and serves http endpoints for iot reading statistics/analysis
-type Server struct {
+//server serves tcp connections for logging iot device readings and serves http endpoints for iot reading statistics/analysis
+type server struct {
 	tcpLis    *net.TCPListener
 	httpPort  string
 	mux       *http.ServeMux
@@ -30,12 +30,12 @@ type Server struct {
 	wg        *sync.WaitGroup
 	clientMu  *sync.Mutex
 	clients   map[uint64]client.ClientConn
-	readings  map[uint64]*client.Reading
+	readings  map[uint64]client.Reading
 	readingMu *sync.Mutex
 }
 
 //NewServer creates a new server instance from the given config
-func NewServer(config *Config) (*Server, error) {
+func NewServer(config *Config) (Server, error) {
 	serverLog := log.New(os.Stdin, config.ServerLogPrefix, log.LstdFlags)
 	clientLog := log.New(os.Stderr, config.ClientLogPrefix, log.LstdFlags)
 	tcpLis, err := net.ListenTCP("tcp", &net.TCPAddr{
@@ -44,7 +44,7 @@ func NewServer(config *Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Server{
+	return &server{
 		tcpLis:    tcpLis,
 		httpPort:  fmt.Sprintf(":%v", config.HttpPort),
 		mux:       http.NewServeMux(),
@@ -54,12 +54,12 @@ func NewServer(config *Config) (*Server, error) {
 		wg:        &sync.WaitGroup{},
 		clients:   map[uint64]client.ClientConn{},
 		readingMu: &sync.Mutex{},
-		readings:  map[uint64]*client.Reading{},
+		readings:  map[uint64]client.Reading{},
 	}, nil
 }
 
 // Listen starts the tcp and http server
-func (s *Server) Listen(ctx context.Context) {
+func (s server) Listen(ctx context.Context) {
 	s.setupRoutes()
 	defer s.tcpLis.Close()
 	wg := sync.WaitGroup{} //wg will opens several goroutines to start the tcp & http servers.
@@ -113,14 +113,14 @@ func (s *Server) Listen(ctx context.Context) {
 }
 
 //AddClient adds a client connection to manage
-func (s *Server) AddClient(client client.ClientConn) {
+func (s server) AddClient(client client.ClientConn) {
 	s.clientMu.Lock()
 	defer s.clientMu.Unlock()
 	s.clients[client.GetIMEI()] = client
 }
 
 //RemoveClient removes the client connection
-func (s *Server) RemoveClient(imei uint64) {
+func (s server) RemoveClient(imei uint64) {
 	s.clientMu.Lock()
 	defer s.clientMu.Unlock()
 	if _, ok := s.clients[imei]; ok {
@@ -128,29 +128,29 @@ func (s *Server) RemoveClient(imei uint64) {
 	}
 }
 
-func (s *Server) TotalClients() int {
+func (s server) TotalClients() int {
 	s.clientMu.Lock()
 	defer s.clientMu.Unlock()
 	return len(s.clients)
 }
 
 //client.Cache implementation
-func (c *Server) SetReading(imei uint64, reading *client.Reading) {
+func (c server) SetReading(imei uint64, reading client.Reading) {
 	c.readingMu.Lock()
 	defer c.readingMu.Unlock()
 	c.readings[imei] = reading
 }
 
-func (c *Server) GetReading(imei uint64) (*client.Reading, bool) {
+func (c server) GetReading(imei uint64) (client.Reading, bool) {
 	c.readingMu.Lock()
 	defer c.readingMu.Unlock()
 	if reading, ok := c.readings[imei]; ok {
 		return reading, true
 	}
-	return nil, false
+	return client.Reading{}, false
 }
 
-func (c *Server) DeleteReading(imei uint64) {
+func (c server) DeleteReading(imei uint64) {
 	c.readingMu.Lock()
 	defer c.readingMu.Unlock()
 	if _, ok := c.readings[imei]; ok {
@@ -158,10 +158,10 @@ func (c *Server) DeleteReading(imei uint64) {
 	}
 }
 
-func (s *Server) GetClientLogger() *log.Logger {
+func (s server) GetClientLogger() client.Printer {
 	return s.clientLog
 }
 
-func (s *Server) GetServerLogger() *log.Logger {
+func (s server) GetServerLogger() client.Printer {
 	return s.serverLog
 }

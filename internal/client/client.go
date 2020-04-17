@@ -19,7 +19,7 @@ type client struct {
 	//handleErr handles all errors during the lifecycle of the connection
 	handleErr func(c ClientConn, err error)
 	//handleReading handles all client readings during the lifecycle of the connection
-	handleReading func(c ClientConn, reading *Reading) error
+	handleReading func(c ClientConn, reading Reading) error
 	//handleLogin handles the clients first message to log them in. The connection will be closed if an error is returned
 	handleLogin func(c ClientConn) error
 	//handleDone is executed when the client connection is closing
@@ -56,7 +56,7 @@ func NewClient(conn net.Conn, manager Manager) (ClientConn, error) {
 		c.GetManager().AddClient(c)
 		return nil
 	}
-	client.handleReading = func(c ClientConn, message *Reading) error {
+	client.handleReading = func(c ClientConn, message Reading) error {
 		if c.GetIMEI() == 0 {
 			return fmt.Errorf("failed handle reading: empty imei code")
 		}
@@ -104,7 +104,7 @@ func (c *client) Connect(ctx context.Context) {
 				c.handleErr(c, fmt.Errorf("failed to read message: %s", err))
 				continue
 			}
-			var reading = new(Reading)
+			var reading = Reading{}
 			if len(b) >= common.MinReadingLength {
 				ok, err := reading.Decode(b)
 				if err != nil {
