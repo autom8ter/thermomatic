@@ -4,7 +4,6 @@ package common
 
 import (
 	"fmt"
-	"os"
 )
 
 type ErrType string
@@ -31,12 +30,4 @@ const (
 
 func Wrap(typ ErrType, details string) error {
 	return fmt.Errorf("%s  - %s", typ, details)
-}
-
-//GetEnv is a safer way to get environment variables if absolutely necessary
-func GetEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
 }
