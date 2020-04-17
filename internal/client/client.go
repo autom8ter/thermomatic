@@ -96,13 +96,13 @@ func (c *client) Connect(ctx context.Context) {
 				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 					c.handleErr(c, fmt.Errorf("client timeout: %s", err))
 					c.Close()
-					return
+					continue
 				}
 				if err == io.EOF {
-					return
+					continue
 				}
 				c.handleErr(c, fmt.Errorf("failed to read message: %s", err))
-				return
+				continue
 			}
 			var reading = new(Reading)
 			if len(b) >= common.MinReadingLength {
