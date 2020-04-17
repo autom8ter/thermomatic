@@ -119,6 +119,11 @@ func (c *client) Connect(ctx context.Context) {
 				}
 
 			}
+			if err := c.GetConn().SetReadDeadline(time.Now().Add(2 * time.Second)); err != nil {
+				c.handleErr(c, fmt.Errorf("client read timeout: %s", err))
+				c.Close()
+				return
+			}
 			b := make([]byte, 40) //read imei from connection
 			if _, err := c.GetConn().Read(b); err != nil {
 				if netErr, ok := err.(net.Error); ok && netErr.Timeout() {

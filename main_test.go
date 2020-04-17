@@ -2,7 +2,6 @@ package main_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/autom8ter/thermomatic/internal/client"
 	"io/ioutil"
 	"log"
@@ -90,7 +89,6 @@ func TestE2E(t *testing.T) {
 		defer resp.Body.Close()
 		reading := &client.Reading{}
 		bits, _ = ioutil.ReadAll(resp.Body)
-		fmt.Println("response: ", string(bits))
 		if err := json.Unmarshal(bits, reading); err != nil {
 			t.Fatal(err.Error())
 		}
