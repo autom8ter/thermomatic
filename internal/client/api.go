@@ -28,11 +28,13 @@ type ClientHub interface {
 	RemoveClient(imei uint64)
 }
 
+//Logger gets client and server loggers
 type Logger interface {
 	GetClientLogger() *log.Logger
 	GetServerLogger() *log.Logger
 }
 
+//Manager manages client connections (implemented by server.Server
 type Manager interface {
 	Logger
 	ClientHub
