@@ -19,7 +19,7 @@ var (
 func TestE2E(t *testing.T) {
 	conn, err := net.Dial("tcp", "localhost:1337")
 	if err != nil {
-		t.Fatal(err.Error())
+		t.Fatalf("expecting live thermomatic server on localhost:1337 - %s", err)
 	}
 	defer conn.Close()
 	//login
@@ -98,7 +98,7 @@ func TestE2E(t *testing.T) {
 func TestE2ELoad(t *testing.T) {
 	conn, err := net.Dial("tcp", "localhost:1337")
 	if err != nil {
-		t.Fatal(err.Error())
+		t.Fatalf("expecting live thermomatic server on localhost:1337 - %s", err)
 	}
 	defer conn.Close()
 	//login

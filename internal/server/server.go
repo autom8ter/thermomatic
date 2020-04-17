@@ -81,7 +81,7 @@ func (s *Server) Listen(ctx context.Context) {
 					s.serverLog.Printf("[ERROR] failed to accept tcp connection: %s", err.Error())
 					continue
 				}
-				clientConn, err := client.NewClient(conn, s, s, s.clientLog, s.serverLog)
+				clientConn, err := client.NewClient(conn, s)
 				if err != nil {
 					s.serverLog.Printf("[ERROR] failed to create client: %s", err.Error())
 					continue
@@ -128,6 +128,12 @@ func (s *Server) RemoveClient(imei uint64) {
 	}
 }
 
+func (s *Server) TotalClients() int {
+	s.clientMu.Lock()
+	defer s.clientMu.Unlock()
+	return len(s.clients)
+}
+
 //client.Cache implementation
 func (c *Server) SetReading(imei uint64, reading *client.Reading) {
 	c.readingMu.Lock()
@@ -150,4 +156,12 @@ func (c *Server) DeleteReading(imei uint64) {
 	if _, ok := c.readings[imei]; ok {
 		delete(c.readings, imei)
 	}
+}
+
+func (s *Server) GetClientLogger() *log.Logger {
+	return s.clientLog
+}
+
+func (s *Server) GetServerLogger() *log.Logger {
+	return s.serverLog
 }

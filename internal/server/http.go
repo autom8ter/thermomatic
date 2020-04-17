@@ -23,6 +23,10 @@ func (s *Server) setupRoutes() {
 
 func (s *Server) handleStatus() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "expecting method: GET", http.StatusMethodNotAllowed)
+			return
+		}
 		id := r.URL.Query().Get("imei")
 		if id == "" {
 			http.Error(w, "missing imei", http.StatusBadRequest)
@@ -47,6 +51,10 @@ func (s *Server) handleStatus() http.HandlerFunc {
 
 func (s *Server) handleReading() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "expecting method: GET", http.StatusMethodNotAllowed)
+			return
+		}
 		id := r.URL.Query().Get("imei")
 		if id == "" {
 			http.Error(w, "missing imei", http.StatusBadRequest)
@@ -70,11 +78,16 @@ func (s *Server) handleReading() http.HandlerFunc {
 	}
 }
 
+//handleStats serves health related metrics.
 func (s *Server) handleStats() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "expecting method: GET", http.StatusMethodNotAllowed)
+			return
+		}
 		stats := &common.Stats{
 			GoRoutines:        runtime.NumGoroutine(),
-			ClientConnections: len(s.readings),
+			ClientConnections: s.TotalClients(),
 			CPUs:              runtime.NumCPU(),
 			Version:           runtime.Version(),
 		}

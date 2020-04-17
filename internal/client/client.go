@@ -6,43 +6,16 @@ import (
 	"github.com/autom8ter/thermomatic/internal/common"
 	"github.com/autom8ter/thermomatic/internal/imei"
 	"io"
-	"log"
 	"net"
 	"time"
 )
-
-//Cache can persist,fetch, and delete each client's last reading in memory
-type Cache interface {
-	SetReading(imei uint64, reading *Reading)
-	GetReading(imei uint64) (*Reading, bool)
-	DeleteReading(imei uint64)
-}
-
-//ClientConn represents a single Thermomatic client connection
-type ClientConn interface {
-	GetConn() net.Conn
-	SetIMEI(code uint64)
-	GetIMEI() uint64
-	GetHub() ClientHub
-	GeCache() Cache
-	Connect(ctx context.Context)
-	Close()
-}
-
-type ClientHub interface {
-	AddClient(c ClientConn)
-	RemoveClient(imei uint64)
-}
 
 //client implements ClientConn
 type client struct {
 	conn net.Conn
 	//imei is the clients imei(unique identifier)
-	imei uint64
-	//clientLog logs readings
-	clientLog *log.Logger
-	//serverLog logs errors and server-related events
-	serverLog *log.Logger
+	imei    uint64
+	manager Manager
 	//handleErr handles all errors during the lifecycle of the connection
 	handleErr func(c ClientConn, err error)
 	//handleReading handles all client readings during the lifecycle of the connection
@@ -52,23 +25,17 @@ type client struct {
 	//handleDone is executed when the client connection is closing
 	handleDone func(c ClientConn)
 	close      chan struct{}
-	hub        ClientHub
-	//cache is used to persist the clients readings
-	cache Cache
 }
 
 //NewClient creates a new ClientConn with default event handlers. clientLog will be used to log readings
-func NewClient(conn net.Conn, hub ClientHub, cache Cache, clientLog, serverLog *log.Logger) (ClientConn, error) {
+func NewClient(conn net.Conn, manager Manager) (ClientConn, error) {
 	client := &client{
-		conn:      conn,
-		clientLog: clientLog,
-		serverLog: serverLog,
+		conn:    conn,
+		manager: manager,
 		handleErr: func(c ClientConn, err error) {
-			serverLog.Printf("[ERROR] %v error: %s", c.GetIMEI(), err)
+			manager.GetServerLogger().Printf("[ERROR] %v error: %s", c.GetIMEI(), err)
 		},
-		hub:   hub,
 		close: make(chan struct{}, 1),
-		cache: cache,
 	}
 	client.handleLogin = func(c ClientConn) error {
 		if err := conn.SetReadDeadline(time.Now().Add(1 * time.Second)); err != nil {
@@ -86,20 +53,20 @@ func NewClient(conn net.Conn, hub ClientHub, cache Cache, clientLog, serverLog *
 			return err
 		}
 		c.SetIMEI(code)
-		hub.AddClient(c)
+		c.GetManager().AddClient(c)
 		return nil
 	}
 	client.handleReading = func(c ClientConn, message *Reading) error {
 		if c.GetIMEI() == 0 {
 			return fmt.Errorf("failed handle reading: empty imei code")
 		}
-		message.Log(c.GetIMEI(), clientLog)
-		client.cache.SetReading(c.GetIMEI(), message)
+		message.Log(c.GetIMEI(), c.GetManager().GetClientLogger())
+		c.GetManager().SetReading(c.GetIMEI(), message)
 		return nil
 	}
 	client.handleDone = func(c ClientConn) {
-		client.cache.DeleteReading(c.GetIMEI())
-		client.hub.RemoveClient(c.GetIMEI())
+		c.GetManager().DeleteReading(c.GetIMEI())
+		c.GetManager().RemoveClient(c.GetIMEI())
 	}
 	return client, nil
 }
@@ -175,12 +142,8 @@ func (c *client) GetIMEI() uint64 {
 	return c.imei
 }
 
-func (c *client) GetHub() ClientHub {
-	return c.hub
-}
-
-func (c *client) GeCache() Cache {
-	return c.cache
+func (c *client) GetManager() Manager {
+	return c.manager
 }
 
 //Close is used to close a client connection
