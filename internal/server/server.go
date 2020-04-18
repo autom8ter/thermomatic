@@ -30,7 +30,7 @@ type server struct {
 	wg        *sync.WaitGroup
 	clientMu  *sync.Mutex
 	clients   map[uint64]client.ClientConn
-	readings  map[uint64]client.Reading
+	readings  map[uint64]*client.Reading
 	readingMu *sync.Mutex
 }
 
@@ -54,7 +54,7 @@ func NewServer(config *Config) (Server, error) {
 		wg:        &sync.WaitGroup{},
 		clients:   map[uint64]client.ClientConn{},
 		readingMu: &sync.Mutex{},
-		readings:  map[uint64]client.Reading{},
+		readings:  map[uint64]*client.Reading{},
 	}, nil
 }
 
@@ -135,19 +135,19 @@ func (s server) TotalClients() int {
 }
 
 //client.Cache implementation
-func (c server) SetReading(imei uint64, reading client.Reading) {
+func (c server) SetReading(imei uint64, reading *client.Reading) {
 	c.readingMu.Lock()
 	defer c.readingMu.Unlock()
 	c.readings[imei] = reading
 }
 
-func (c server) GetReading(imei uint64) (client.Reading, bool) {
+func (c server) GetReading(imei uint64) (*client.Reading, bool) {
 	c.readingMu.Lock()
 	defer c.readingMu.Unlock()
 	if reading, ok := c.readings[imei]; ok {
 		return reading, true
 	}
-	return client.Reading{}, false
+	return nil, false
 }
 
 func (c server) DeleteReading(imei uint64) {

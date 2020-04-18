@@ -7,8 +7,8 @@ import (
 
 //Cache can persist,fetch, and delete each client's last reading in memory
 type Cache interface {
-	SetReading(imei uint64, reading Reading)
-	GetReading(imei uint64) (Reading, bool)
+	SetReading(imei uint64, reading *Reading)
+	GetReading(imei uint64) (*Reading, bool)
 	DeleteReading(imei uint64)
 }
 
